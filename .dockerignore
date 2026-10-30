@@ -1,0 +1,16 @@
+.git
+.agents
+.aws
+.codex
+.env.example
+.venv
+node_modules
+tests
+test-results
+__pycache__
+.pytest_cache
+.ruff_cache
+*.pyc
+docs
+backups
+.github

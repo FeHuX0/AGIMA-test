@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#183f36" />
+    <meta
+      name="description"
+      content="Вектор — AI-ассистент для планов, решений и итогов встреч вашей команды."
+    />
+    <title>Вектор — AI для команды</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script type="module" src="/static/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#question">Перейти к вопросу</a>
+    <main class="login-screen" id="login-screen">
+      <section class="login-card card" aria-labelledby="login-title">
+        <span class="login-mark" aria-hidden="true">↗</span>
+        <h1 id="login-title">Войти в Вектор</h1>
+        <p>Ваши диалоги и рабочие решения — в одном пространстве.</p>
+        <form id="login-form">
+          <label for="username">Логин</label>
+          <input id="username" name="username" autocomplete="username" maxlength="64" required>
+          <label for="password">Пароль</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" maxlength="256" required>
+          <p id="login-error" role="alert" hidden></p>
+          <button class="button button-primary" type="submit" id="login-button">Войти ↗</button>
+        </form>
+        <small>Учётную запись создаёт администратор команды.</small>
+      </section>
+    </main>
+    <div class="layout" id="workspace-view" hidden>
+      <aside class="sidebar" aria-label="Рабочее пространство">
+        <a class="brand" href="/" aria-label="Вектор, главная"
+          ><span class="brand-mark">↗</span> вектор<span class="brand-dot"
+            >.</span
+          ></a
+        >
+        <div class="workspace">
+          <span class="workspace-icon">К</span>
+          <div>Моя команда<small>Рабочее пространство</small></div>
+        </div>
+        <p class="nav-label">ИНСТРУМЕНТЫ</p>
+        <nav class="mode-navigation" aria-label="Сценарий работы">
+          <button
+            class="nav-item active"
+            type="button"
+            data-mode="ask"
+            aria-current="page"
+          >
+            <span>✳</span> AI-ассистент <span class="nav-arrow">↗</span>
+          </button>
+          <button class="nav-item" type="button" data-mode="plan">
+            <span>☷</span> План действий
+          </button>
+          <button class="nav-item" type="button" data-mode="summary">
+            <span>▤</span> Итоги встречи
+          </button>
+          <button class="nav-item" type="button" data-mode="decision">
+            <span>⇄</span> Разбор решения
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-note">
+            <span class="note-orbit">✳</span>
+            <p>Меньше рутины.<br />Больше движения.</p>
+            <small>От вопроса к следующему шагу.</small>
+          </div>
+          <div class="local-user">
+            <span class="avatar">ВЫ</span>
+            <div><span id="signed-name">Рабочее пространство</span><small>Диалоги сохранены на сервере</small></div>
+            <span class="local-dot" title="Серверное хранение"></span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="breadcrumb">
+            Рабочее пространство <span>/</span>
+            <strong id="breadcrumb-title">AI-ассистент</strong>
+          </div>
+          <span class="topbar-caption"
+            >СОЗДАН ДЛЯ КОМАНДНОЙ РАБОТЫ <span>↗</span></span
+          >
+          <button class="text-button" id="logout-button" type="button">Выйти</button>
+        </header>
+        <div class="content">
+          <section class="page-heading" aria-labelledby="page-title">
+            <div>
+              <p class="eyebrow">
+                <span class="green-dot"></span> ВАШ РАБОЧИЙ AI-АССИСТЕНТ
+              </p>
+              <h1 id="page-title">
+                Хороший вопрос.<br /><em>Ясный следующий шаг.</em>
+              </h1>
+              <p class="intro" id="page-description">
+                Соберите мысли, разложите задачу по шагам или подведите<br
+                  class="desktop-break"
+                />
+                итоги встречи. Вектор поможет команде двигаться дальше.
+              </p>
+            </div>
+            <div class="heading-art" aria-hidden="true">
+              <div class="art-grid"></div>
+              <span class="art-arrow">↗</span
+              ><span class="art-caption">THINK. ALIGN. ACT.</span>
+            </div>
+          </section>
+
+          <div class="dashboard-grid">
+            <div class="primary-column">
+              <div class="conversation-controls">
+                <button class="text-button" id="new-conversation" type="button">＋ Новый диалог</button>
+                <span id="conversation-label">Новый диалог</span>
+                <button class="text-button" id="delete-conversation" type="button" hidden>Удалить диалог</button>
+              </div>
+              <button class="text-button older-turns" id="older-turns" type="button" hidden>Показать предыдущие сообщения</button>
+              <div id="conversation-log" class="conversation-log"></div>
+              <section class="composer card" aria-labelledby="composer-title">
+                <div class="card-heading">
+                  <h2 id="composer-title">
+                    <span class="spark">✳</span> Что обсудим?
+                  </h2>
+                  <span id="provider-badge" class="badge">Подключение…</span>
+                </div>
+                <form id="question-form">
+                  <label class="sr-only" for="question">Ваш вопрос</label>
+                  <textarea
+                    id="question"
+                    name="question"
+                    rows="5"
+                    minlength="3"
+                    maxlength="6000"
+                    required
+                    placeholder="Например: как подготовить запуск новой функции за две недели?"
+                    aria-describedby="question-hint question-count"
+                  ></textarea>
+                  <div class="input-details">
+                    <span id="question-hint"
+                      >Задача, идея или вопрос — начните с главного</span
+                    ><span id="question-count">0 / 6000</span>
+                  </div>
+                  <details class="context-details">
+                    <summary>
+                      <span>＋</span> Добавить контекст
+                      <span class="optional">необязательно</span>
+                    </summary>
+                    <label for="context"
+                      >Заметки, ограничения или исходные данные</label
+                    ><textarea
+                      id="context"
+                      name="context"
+                      rows="4"
+                      maxlength="12000"
+                      placeholder="Что уже известно? Каковы сроки и ограничения?"
+                    ></textarea
+                    ><span class="context-count" id="context-count"
+                      >0 / 12000</span
+                    >
+                  </details>
+                  <div class="composer-footer">
+                    <span class="shortcut"
+                      ><kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                      <span>отправить</span></span
+                    ><button
+                      class="button button-primary"
+                      id="submit-button"
+                      type="submit"
+                      disabled
+                    >
+                      <span id="submit-label">Спросить AI</span
+                      ><span aria-hidden="true">↗</span>
+                    </button>
+                  </div>
+                </form>
+                <div class="mode-notice" id="mode-notice" role="status">
+                  Проверяем подключение к ассистенту…
+                </div>
+              </section>
+
+              <section class="suggestions" aria-labelledby="suggestions-title">
+                <div class="section-caption">
+                  <h2 id="suggestions-title">МОЖНО НАЧАТЬ С ЭТОГО</h2>
+                  <span>Выберите идею ↙</span>
+                </div>
+                <div class="suggestion-grid" id="suggestion-list"></div>
+              </section>
+
+              <section
+                class="answer-card card"
+                id="answer-panel"
+                aria-labelledby="answer-title"
+                aria-busy="false"
+              >
+                <div class="card-heading">
+                  <h2 id="answer-title">
+                    <span class="answer-icon">↗</span> Ответ ассистента
+                  </h2>
+                  <button
+                    type="button"
+                    class="copy-button"
+                    id="copy-button"
+                    hidden
+                  >
+                    <span aria-hidden="true">▢</span>
+                    <span id="copy-label">Копировать ответ</span>
+                  </button>
+                </div>
+                <div id="answer-empty" class="answer-empty">
+                  <div class="empty-symbol" aria-hidden="true">✳</div>
+                  <h3>Здесь появится ясность</h3>
+                  <p>
+                    Задайте вопрос — получите структурированный<br />ответ, с
+                    которым можно работать.
+                  </p>
+                </div>
+                <div
+                  id="answer-loading"
+                  class="answer-loading"
+                  hidden
+                  role="status"
+                >
+                  <span class="loading-orbit" aria-hidden="true">✳</span>
+                  <div>
+                    <strong id="loading-title"
+                      >Вектор разбирается в задаче</strong
+                    >
+                    <p>
+                      Обычно это занимает несколько секунд<span
+                        class="loading-dots"
+                        >…</span
+                      >
+                    </p>
+                    <button class="text-button" id="pause-waiting" type="button" disabled>Остановить ожидание</button>
+                  </div>
+                </div>
+                <div class="error-panel" id="error-panel" hidden role="alert">
+                  <span aria-hidden="true">!</span>
+                  <div>
+                    <h3>Не удалось получить ответ</h3>
+                    <p id="error-message"></p>
+                    <button type="button" class="text-button" id="retry-button">
+                      Попробовать снова ↗
+                    </button>
+                  </div>
+                </div>
+                <div class="answer-result" id="answer-result" hidden>
+                  <p class="answer-question" id="answer-question"></p>
+                  <div class="answer-source" id="answer-source"></div>
+                  <article class="markdown" id="answer-content"></article>
+                  <p class="truncation-note" id="truncation-note" hidden>
+                    Ответ достиг лимита длины. Уточните вопрос или попросите
+                    более краткий ответ.
+                  </p>
+                  <div class="answer-meta">
+                    <span id="answer-meta"></span
+                    ><span>Проверьте важные факты</span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <aside class="secondary-column">
+              <section
+                class="history-card card"
+                aria-labelledby="history-title"
+              >
+                <div class="card-heading">
+                  <h2 id="history-title">Последние запросы</h2>
+                  <span class="history-number" id="history-count">0</span>
+                </div>
+                <p class="history-description">
+                  Вернитесь к тому, что уже обсудили.
+                </p>
+                <ol class="history-list" id="history-list"></ol>
+                <button class="text-button more-history" id="more-history" type="button" hidden>Ещё запросы</button>
+                <div class="history-empty" id="history-empty">
+                  <span aria-hidden="true">↶</span>
+                  <p>История начинается<br />с вашего первого вопроса</p>
+                </div>
+                <div class="history-footer">
+                  <span
+                    ><span class="green-dot"></span> Сохранено на сервере</span
+                  ><button
+                    id="clear-history"
+                    type="button"
+                    class="text-button"
+                    disabled
+                  >
+                    Очистить
+                  </button>
+                </div>
+                <p class="storage-warning" id="history-error" role="status" hidden></p>
+                <button class="text-button more-history" id="retry-history" type="button" hidden>Повторить загрузку запросов</button>
+              </section>
+              <section class="tip-card">
+                <p class="eyebrow">МАЛЕНЬКИЙ СОВЕТ</p>
+                <h2>Контекст меняет<br /><em>качество ответа.</em></h2>
+                <p>
+                  Добавьте цель, ограничения и желаемый результат. Чем точнее
+                  вопрос, тем полезнее следующий шаг.
+                </p>
+                <span class="tip-arrow" aria-hidden="true">↗</span>
+              </section>
+              <div class="privacy-note">
+                <span aria-hidden="true">◇</span>
+                <p>
+                  Диалоги хранятся в вашем аккаунте. Модель получает вопрос,
+                  контекст и ограниченную историю текущей беседы. Другие
+                  диалоги ей недоступны.
+                </p>
+              </div>
+            </aside>
+          </div>
+          <footer class="page-footer">
+            <span
+              >Вектор<span class="footer-dot">.</span>
+              <span class="footer-divider">/</span> Чуть больше ясности каждый
+              день.</span
+            ><span>AI помогает. Решаете вы.</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" hidden></div>
+    <noscript
+      ><p class="noscript">
+        Для работы ассистента включите JavaScript в браузере.
+      </p></noscript
+    >
+  </body>
+</html>

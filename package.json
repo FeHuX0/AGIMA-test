@@ -1,0 +1,12 @@
+{
+  "name": "vector-ui-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/frontend/*.test.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

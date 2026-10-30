@@ -1,0 +1,81 @@
+x-app: &app
+  image: vector-app:local
+  build: .
+  env_file: .env.example
+  environment:
+    DATABASE_URL: postgresql+psycopg://vector:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.example}@db:5432/vector
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=32m
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: vector
+      POSTGRES_DB: vector
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.example}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U vector -d vector"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  migrate:
+    <<: *app
+    command: [alembic, upgrade, head]
+    restart: "no"
+    healthcheck: {disable: true}
+    depends_on:
+      db: {condition: service_healthy}
+
+  app:
+    <<: *app
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/ready', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: [python, -m, app.worker]
+    restart: unless-stopped
+    mem_limit: 1g
+    stop_grace_period: 210s
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -m, app.manage, check-worker]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  postgres_data:
